@@ -1,0 +1,180 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Feed {
+  id                    String            @id @default(uuid())
+  feedCode              String            @unique
+  sourceOrg             String
+  feedName              String
+  domain                String
+  deliveryMethod        String
+  fileFormat            String
+  frequency             String
+  slaMinutes            Int
+  status                String
+  wave                  String            @default("Wave 1")
+  owner                 String
+  targetOdsTables       String            // Stored as JSON string
+  dqScore               Float             @default(100.0)
+  totalRecordsProcessed Int               @default(0)
+  quarantineCount       Int               @default(0)
+  createdDate           String
+  updatedDate           String
+  fields                SchemaField[]
+  mappings              CanonicalMapping[]
+  dqRules               DQRule[]
+  runs                  PipelineRun[]
+  quarantineRecords     QuarantineRecord[]
+}
+
+model SchemaField {
+  id                String   @id @default(uuid())
+  feedId            String
+  feed              Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  fieldName         String
+  dataType          String
+  nullable          Boolean
+  sampleValues      String   // Stored as JSON string
+  phiClassification String   @default("None")
+  confidenceScore   Int      @default(99)
+}
+
+model CanonicalMapping {
+  id              String   @id @default(uuid())
+  feedId          String
+  feed            Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  sourceField     String
+  targetEntity    String
+  targetField     String
+  transformation  String
+  confidenceScore Int      @default(99)
+  isCustom        Boolean  @default(false)
+}
+
+model DQRule {
+  id              String   @id @default(uuid())
+  feedId          String
+  feed            Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  name            String
+  naturalLanguage String
+  generatedCode   String
+  severity        String
+  layer           String
+  passCount       Int      @default(0)
+  failCount       Int      @default(0)
+  status          String   @default("Active")
+}
+
+model PipelineRun {
+  id                        String   @id @default(uuid())
+  feedId                    String
+  feed                      Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  feedName                  String
+  batchId                   String   @unique
+  fileReceived              String
+  fileName                  String
+  fileSizeBytes             Int
+  status                    String
+  currentStage              String
+  stageStats                String   // Stored as JSON string
+  identityMatchesCount      Int      @default(0)
+  unresolvedIdentitiesCount Int      @default(0)
+  reconciliationStatus      String   @default("Match")
+  logTrace                  String   // Stored as JSON string
+  timestamp                 String
+}
+
+model QuarantineRecord {
+  id          String   @id @default(uuid())
+  feedId      String
+  feed        Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  feedName    String
+  batchId     String
+  layer       String
+  fieldName   String
+  errorReason String
+  severity    String
+  recordData  String   // Stored as JSON string
+  phiMasked   Boolean  @default(true)
+  status      String   @default("Pending")
+  timestamp   String
+}
+
+model ReconciliationReport {
+  id                  String   @id @default(uuid())
+  batchId             String   @unique
+  feedName            String
+  timestamp           String
+  landingCount        Int
+  bronzeCount         Int
+  silverRawCount      Int
+  silverOdsCount      Int
+  quarantineCount     Int
+  varianceCount       Int
+  controlTotalBilled  Float?
+  reconciledBilled    Float?
+  certificationStatus String   @default("Certified")
+  certifiedBy         String?
+  waiverReason        String?
+  waiverExpiryDate    String?
+}
+
+model FileArrival {
+  id                  String   @id @default(uuid())
+  feedId              String
+  feedCode            String
+  feedName            String
+  expectedTime        String
+  actualTime          String?
+  status              String
+  slaMinutesRemaining Int
+  deliveryMethod      String
+  fileSizeMb          Float?
+}
+
+model SchemaDrift {
+  id          String   @id @default(uuid())
+  feedId      String
+  feedName    String
+  fieldName   String
+  changeType  String
+  impact      String
+  detectedAt  String
+  details     String
+  status      String   @default("Detected")
+}
+
+model FailureFingerprint {
+  id                 String   @id @default(uuid())
+  incidentId         String   @unique
+  batchId            String
+  feedName           String
+  errorCode          String
+  rootCause          String
+  runbookId          String
+  runbookTitle       String
+  priorOccurrences   Int
+  meanFixTimeMinutes Int
+  proposedFix        String
+  evidenceRows       String   // Stored as JSON string
+  status             String   @default("Fix Proposed")
+}
+
+model VarianceInvestigation {
+  id                 String   @id @default(uuid())
+  batchId            String
+  feedName           String
+  varianceType       String
+  amount             Float
+  status             String   @default("Open")
+  assignedOwner      String
+  justificationNotes String?
+  waiverExpiryDate   String?
+  timestamp          String
+}

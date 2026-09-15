@@ -263,7 +263,7 @@ export const OperationsControlCenter: React.FC = () => {
         <div className="glass-card rounded-2xl p-4 border border-slate-800 space-y-2">
           <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Governed Ops Action Audit Log ({incidentActions.length})</h3>
           <div className="space-y-1 font-mono text-xs text-slate-300">
-            {incidentActions.map((act) => (
+            {incidentActions.map((act: any) => (
               <div key={act.id} className="bg-slate-900 p-2 rounded flex justify-between">
                 <span className="text-cyan-400 font-bold">[{act.actor}] {act.actionType}</span>
                 <span className="text-slate-400">{act.notes}</span>

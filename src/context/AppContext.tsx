@@ -23,6 +23,7 @@ import {
   MOCK_RELIABILITY_TRENDS,
   MOCK_VARIANCES
 } from '../data/mockData';
+import { apiService } from '../services/api';
 
 interface AppContextType {
   userRole: UserRole;
@@ -49,7 +50,7 @@ interface AppContextType {
   reliabilityTrends: FeedReliabilityTrend[];
   variances: VarianceInvestigation[];
   incidentActions: OpsIncidentAction[];
-  
+  isBackendConnected: boolean;
   acknowledgeIncident: (incidentId: string) => void;
   assignIncidentOwner: (incidentId: string, owner: string) => void;
   pauseFeedIngestion: (feedId: string) => void;
@@ -78,6 +79,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reliabilityTrends] = useState<FeedReliabilityTrend[]>(MOCK_RELIABILITY_TRENDS);
   const [variances, setVariances] = useState<VarianceInvestigation[]>(MOCK_VARIANCES);
   const [incidentActions, setIncidentActions] = useState<OpsIncidentAction[]>([]);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    async function syncBackend() {
+      try {
+        const isHealthy = await apiService.checkHealth();
+        if (isHealthy) {
+          setIsBackendConnected(true);
+          const backendFeeds = await apiService.fetchFeeds();
+          if (backendFeeds && backendFeeds.length > 0) {
+            setFeeds(backendFeeds);
+          }
+          const backendRuns = await apiService.fetchPipelineRuns();
+          if (backendRuns && backendRuns.length > 0) {
+            setPipelineRuns(backendRuns);
+          }
+          const backendQuarantine = await apiService.fetchQuarantineRecords();
+          if (backendQuarantine && backendQuarantine.length > 0) {
+            setQuarantineRecords(backendQuarantine);
+          }
+        }
+      } catch (err) {
+        setIsBackendConnected(false);
+      }
+    }
+    syncBackend();
+  }, []);
 
   const addFeed = (newFeed: FeedConfig) => {
     setFeeds(prev => [newFeed, ...prev]);
@@ -297,6 +325,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       reliabilityTrends,
       variances,
       incidentActions,
+      isBackendConnected,
       acknowledgeIncident,
       assignIncidentOwner,
       pauseFeedIngestion,
