@@ -62,9 +62,9 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userRole, setUserRole] = useState<UserRole>('ops');
+  const [userRole, setUserRole] = useState<UserRole>('ba');
   const [phiMasked, setPhiMasked] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>('ops-control');
+  const [activeTab, setActiveTab] = useState<string>('onboarding');
   const [feeds, setFeeds] = useState<FeedConfig[]>(INITIAL_FEEDS);
   const [quarantineRecords, setQuarantineRecords] = useState<QuarantineRecord[]>(MOCK_QUARANTINE_RECORDS);
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRun[]>(MOCK_PIPELINE_RUNS);
