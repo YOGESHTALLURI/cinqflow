@@ -377,3 +377,153 @@ export const MOCK_GLOSSARY_TERMS: BusinessGlossaryTerm[] = [
     owner: 'Platform Engineering'
   }
 ];
+
+// --- Wave 2 Mock Datasets ---
+
+export const MOCK_FILE_ARRIVALS = [
+  {
+    id: 'fa-001',
+    feedId: 'feed-001',
+    feedCode: 'FEED-AET-834',
+    feedName: 'Aetna 834 Member Enrollment Feed',
+    expectedTime: 'Daily 04:00 EST',
+    actualTime: '2026-09-15 04:02 EST',
+    status: 'On-Time' as const,
+    slaMinutesRemaining: 118,
+    deliveryMethod: 'SFTP' as const,
+    fileSizeMb: 4.2
+  },
+  {
+    id: 'fa-002',
+    feedId: 'feed-002',
+    feedCode: 'FEED-BCBS-837P',
+    feedName: 'BCBS 837 Professional Claims Feed',
+    expectedTime: 'Daily 06:00 EST',
+    actualTime: '2026-09-15 06:14 EST',
+    status: 'On-Time' as const,
+    slaMinutesRemaining: 166,
+    deliveryMethod: 'Azure Storage' as const,
+    fileSizeMb: 18.4
+  },
+  {
+    id: 'fa-003',
+    feedId: 'feed-004',
+    feedCode: 'FEED-QUEST-LAB',
+    feedName: 'Quest Diagnostics Lab Results Feed',
+    expectedTime: 'Daily 02:00 EST',
+    actualTime: undefined,
+    status: 'Late' as const,
+    slaMinutesRemaining: -45,
+    deliveryMethod: 'SFTP' as const,
+    fileSizeMb: 0
+  },
+  {
+    id: 'fa-004',
+    feedId: 'feed-003',
+    feedCode: 'FEED-MSH-ADT',
+    feedName: 'Epic ADT Real-time Event Feed',
+    expectedTime: 'Streaming (15 mins)',
+    actualTime: '2026-09-15 13:00 EST',
+    status: 'Streaming' as const,
+    slaMinutesRemaining: 15,
+    deliveryMethod: 'FHIR' as const,
+    fileSizeMb: 1.1
+  }
+];
+
+export const MOCK_SCHEMA_DRIFTS = [
+  {
+    id: 'sd-101',
+    feedId: 'feed-001',
+    feedName: 'Aetna 834 Member Enrollment Feed',
+    fieldName: 'pcp_npi_secondary',
+    changeType: 'NewColumn' as const,
+    impact: 'Non-Breaking' as const,
+    detectedAt: '2026-09-15 04:02 EST',
+    details: 'New optional column "pcp_npi_secondary" detected in batch header. Data contract can be auto-extended.',
+    status: 'Detected' as const
+  },
+  {
+    id: 'sd-102',
+    feedId: 'feed-002',
+    feedName: 'BCBS 837 Professional Claims Feed',
+    fieldName: 'service_facility_id',
+    changeType: 'DataTypeMismatch' as const,
+    impact: 'Breaking' as const,
+    detectedAt: '2026-09-15 06:14 EST',
+    details: 'Inbound field "service_facility_id" changed from INTEGER to VARCHAR(50) causing type conversion warning.',
+    status: 'Detected' as const
+  }
+];
+
+export const MOCK_FAILURE_FINGERPRINTS = [
+  {
+    id: 'fp-801',
+    incidentId: 'INC-20260915-09',
+    batchId: 'BATCH-20260915-002',
+    feedName: 'Quest Diagnostics Lab Results Feed',
+    errorCode: 'BH-AF-002',
+    rootCause: 'SFTP Drop Timeout & Missing Control Footer Header',
+    runbookId: 'RUNBOOK-SFTP-04',
+    runbookTitle: 'Restart Ingestion Listener & Trigger Upstream Payer Re-transmit',
+    priorOccurrences: 14,
+    meanFixTimeMinutes: 18,
+    proposedFix: 'Trigger automated retry with modified timeout threshold (300s)',
+    evidenceRows: [
+      { field: 'control_header', error: 'NullPointer', sample: 'EOF expected at byte 0' },
+      { field: 'checksum', error: 'MD5 Mismatch', sample: 'e99a... != null' }
+    ],
+    status: 'Fix Proposed' as const
+  }
+];
+
+export const MOCK_RELIABILITY_TRENDS = [
+  {
+    feedId: 'feed-001',
+    feedCode: 'FEED-AET-834',
+    feedName: 'Aetna 834 Member Enrollment Feed',
+    overallReliabilityScore: 98.6,
+    dqScore: 98.4,
+    slaComplianceScore: 99.2,
+    reconciliationScore: 98.2,
+    trendDirection: 'Up' as const,
+    recentIncidentsCount: 0
+  },
+  {
+    feedId: 'feed-002',
+    feedCode: 'FEED-BCBS-837P',
+    feedName: 'BCBS 837 Professional Claims Feed',
+    overallReliabilityScore: 96.8,
+    dqScore: 96.8,
+    slaComplianceScore: 97.5,
+    reconciliationScore: 96.1,
+    trendDirection: 'Stable' as const,
+    recentIncidentsCount: 1
+  },
+  {
+    feedId: 'feed-004',
+    feedCode: 'FEED-QUEST-LAB',
+    feedName: 'Quest Diagnostics Lab Results Feed',
+    overallReliabilityScore: 88.4,
+    dqScore: 94.2,
+    slaComplianceScore: 82.0,
+    reconciliationScore: 89.0,
+    trendDirection: 'Down' as const,
+    recentIncidentsCount: 3
+  }
+];
+
+export const MOCK_VARIANCES = [
+  {
+    id: 'var-301',
+    batchId: 'BATCH-20260909-004',
+    feedName: 'BCBS 837 Professional Claims Feed',
+    varianceType: 'Financial' as const,
+    amount: 48000.00,
+    status: 'Investigating' as const,
+    assignedOwner: 'Marcus Vance (Data Steward)',
+    justificationNotes: 'Duplicate claim cancellation file identified in raw batch. Pending steward waiver signoff.',
+    timestamp: '2026-09-09 06:18 EST'
+  }
+];
+

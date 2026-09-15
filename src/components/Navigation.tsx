@@ -12,27 +12,35 @@ import {
   Shield, 
   UserCheck, 
   Eye, 
-  EyeOff 
+  EyeOff,
+  Clock,
+  GitCommit,
+  RotateCcw,
+  Award
 } from 'lucide-react';
 
 export const Navigation: React.FC = () => {
   const { userRole, setUserRole, phiMasked, setPhiMasked, activeTab, setActiveTab } = useApp();
 
   const navItems = [
+    { id: 'ops-control', label: 'Ops Control & Recovery', icon: RotateCcw, badge: 'Wave 2' },
+    { id: 'file-arrivals', label: 'File Arrival Board', icon: Clock, badge: 'Wave 2' },
+    { id: 'schema-drift', label: 'Schema Drift Guard', icon: GitCommit, badge: 'Wave 2' },
+    { id: 'variance-waivers', label: 'Variance & Certification', icon: Award, badge: 'Wave 2' },
     { id: 'onboarding', label: 'BA Onboarding Wizard', icon: Sparkles, badge: '5-Step' },
     { id: 'registry', label: 'Feed Registry', icon: Database },
     { id: 'pipeline', label: 'Medallion Pipeline Engine', icon: Workflow },
-    { id: 'quarantine', label: 'Quarantine & Exceptions', icon: ShieldAlert, alert: true },
+    { id: 'quarantine', label: 'Quarantine & Exceptions', icon: ShieldAlert },
     { id: 'observability', label: 'Operational Control', icon: Activity },
     { id: 'reconciliation', label: 'Reconciliation & Audit', icon: Scale },
     { id: 'catalog', label: 'Data Catalog & Glossary', icon: BookOpen },
   ];
 
   const roles: { value: UserRole; label: string }[] = [
-    { value: 'ba', label: 'Business Analyst (BA)' },
+    { value: 'ops', label: 'Operations Team (Ops)' },
     { value: 'steward', label: 'Data Steward' },
     { value: 'engineer', label: 'Data Engineer' },
-    { value: 'ops', label: 'Operations Team' },
+    { value: 'ba', label: 'Business Analyst (BA)' },
     { value: 'approver', label: 'Config Approver' },
     { value: 'admin', label: 'Platform Admin' },
   ];
@@ -49,8 +57,8 @@ export const Navigation: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-white tracking-wide">CINQ<span className="gradient-text">Flow</span></h1>
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/50">
-                Wave 1 MVP
+              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/60 font-mono">
+                Wave 2 (Ops & Governance)
               </span>
             </div>
             <p className="text-xs text-slate-400">CINQCARE Self-Service Healthcare Data Platform</p>
@@ -112,7 +120,7 @@ export const Navigation: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive
                     ? 'bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'
@@ -121,7 +129,11 @@ export const Navigation: React.FC = () => {
                 <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
                 <span>{item.label}</span>
                 {item.badge && (
-                  <span className="px-1.5 py-0.5 text-[10px] bg-cyan-950 text-cyan-300 rounded font-mono border border-cyan-800/60">
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded font-mono border ${
+                    item.badge === 'Wave 2' 
+                      ? 'bg-indigo-950 text-indigo-300 border-indigo-800/80 font-bold' 
+                      : 'bg-cyan-950 text-cyan-300 border-cyan-800/60'
+                  }`}>
                     {item.badge}
                   </span>
                 )}

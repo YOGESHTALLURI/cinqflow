@@ -3,7 +3,7 @@ export type UserRole =
   | 'steward'      // Data Steward
   | 'engineer'     // Data Engineer
   | 'ops'          // Operations
-  | 'approver'     // Approver
+  | 'approver'     // Config Approver
   | 'admin';       // Administrator
 
 export type HealthcareDomain = 
@@ -169,8 +169,10 @@ export interface ReconciliationReport {
   varianceCount: number;
   controlTotalBilled?: number;
   reconciledBilled?: number;
-  certificationStatus: 'Certified' | 'Variance Exception' | 'Pending Approval';
+  certificationStatus: 'Certified' | 'Certified-with-Waiver' | 'Variance Exception' | 'Pending Approval';
   certifiedBy?: string;
+  waiverReason?: string;
+  waiverExpiryDate?: string;
 }
 
 export interface BusinessGlossaryTerm {
@@ -181,4 +183,81 @@ export interface BusinessGlossaryTerm {
   phiType: string;
   synonyms: string[];
   owner: string;
+}
+
+// --- Wave 2 Feature Suite Types ---
+
+export interface SchemaDrift {
+  id: string;
+  feedId: string;
+  feedName: string;
+  fieldName: string;
+  changeType: 'NewColumn' | 'MissingColumn' | 'TypeMismatch' | 'DataTypeMismatch';
+  impact: 'Non-Breaking' | 'Breaking';
+  detectedAt: string;
+  details: string;
+  status: 'Detected' | 'Accepted' | 'Rejected';
+}
+
+export interface FileArrival {
+  id: string;
+  feedId: string;
+  feedCode: string;
+  feedName: string;
+  expectedTime: string;
+  actualTime?: string;
+  status: 'On-Time' | 'Late' | 'Missing' | 'Streaming';
+  slaMinutesRemaining: number;
+  deliveryMethod: DeliveryMethod;
+  fileSizeMb?: number;
+}
+
+export interface FailureFingerprint {
+  id: string;
+  incidentId: string;
+  batchId: string;
+  feedName: string;
+  errorCode: string;
+  rootCause: string;
+  runbookId: string;
+  runbookTitle: string;
+  priorOccurrences: number;
+  meanFixTimeMinutes: number;
+  proposedFix: string;
+  evidenceRows: Array<{ field: string; error: string; sample: string }>;
+  status: 'Open' | 'Fix Proposed' | 'Resolved';
+}
+
+export interface FeedReliabilityTrend {
+  feedId: string;
+  feedCode: string;
+  feedName: string;
+  overallReliabilityScore: number; // 0 - 100%
+  dqScore: number;
+  slaComplianceScore: number;
+  reconciliationScore: number;
+  trendDirection: 'Up' | 'Stable' | 'Down';
+  recentIncidentsCount: number;
+}
+
+export interface VarianceInvestigation {
+  id: string;
+  batchId: string;
+  feedName: string;
+  varianceType: 'Count' | 'Financial' | 'Member' | 'Duplicate';
+  amount: number; // Variance count or $ amount
+  status: 'Open' | 'Investigating' | 'Waived' | 'Corrected';
+  justificationNotes?: string;
+  waiverExpiryDate?: string;
+  assignedOwner: string;
+  timestamp: string;
+}
+
+export interface OpsIncidentAction {
+  id: string;
+  incidentId: string;
+  actionType: 'Acknowledge' | 'Assign' | 'Pause Ingestion' | 'Trigger Retry' | 'Backdate Execution';
+  actor: string;
+  timestamp: string;
+  notes?: string;
 }
