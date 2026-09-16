@@ -111,16 +111,54 @@ app.post('/api/feeds', async (req, res) => {
         fileFormat: body.fileFormat || 'CSV',
         frequency: body.frequency || 'Daily 04:00 EST',
         slaMinutes: body.slaMinutes || 120,
-        status: body.status || 'In Review',
+        status: body.status || 'Active',
         wave: body.wave || 'Wave 1',
         owner: body.owner || 'Sarah Jenkins (Lead BA)',
         targetOdsTables: JSON.stringify(body.targetOdsTables || ['ODS_Member']),
         createdDate: new Date().toISOString().split('T')[0],
-        updatedDate: new Date().toISOString().split('T')[0]
-      }
+        updatedDate: new Date().toISOString().split('T')[0],
+        fields: body.schemaFields ? {
+          create: body.schemaFields.map((f: any) => ({
+            fieldName: f.fieldName,
+            dataType: f.dataType || 'VARCHAR(50)',
+            nullable: f.nullable ?? true,
+            sampleValues: JSON.stringify(f.sampleValues || []),
+            phiClassification: f.phiClassification || 'None',
+            confidenceScore: f.confidenceScore || 95
+          }))
+        } : undefined,
+        mappings: body.mappings ? {
+          create: body.mappings.map((m: any) => ({
+            sourceField: m.sourceField,
+            targetEntity: m.targetEntity || 'Member',
+            targetField: m.targetField || m.sourceField,
+            transformation: m.transformation || 'DirectCopy',
+            confidenceScore: m.confidenceScore || 95,
+            isCustom: m.isCustom ?? false
+          }))
+        } : undefined,
+        dqRules: body.dqRules ? {
+          create: body.dqRules.map((r: any) => ({
+            name: r.name,
+            naturalLanguage: r.naturalLanguage || '',
+            generatedCode: r.generatedCode || '',
+            severity: r.severity || 'Quarantine',
+            layer: r.layer || 'Silver Raw'
+          }))
+        } : undefined
+      },
+      include: { fields: true, mappings: true, dqRules: true }
     });
-    res.json(newFeed);
+    
+    res.json({
+      ...newFeed,
+      targetOdsTables: JSON.parse(newFeed.targetOdsTables || '[]'),
+      schemaFields: newFeed.fields.map(sf => ({ ...sf, sampleValues: JSON.parse(sf.sampleValues || '[]') })),
+      mappings: newFeed.mappings,
+      dqRules: newFeed.dqRules
+    });
   } catch (err) {
+    console.error('Error creating feed:', err);
     res.status(500).json({ error: 'Failed to create feed' });
   }
 });
@@ -221,7 +259,13 @@ app.post('/api/pipelines/run', async (req, res) => {
       }
     });
 
-    res.json({ execResult, pipelineRun, reconReport });
+    const formattedPipelineRun = {
+      ...pipelineRun,
+      stageStats: JSON.parse(pipelineRun.stageStats || '{}'),
+      logTrace: JSON.parse(pipelineRun.logTrace || '[]')
+    };
+
+    res.json({ execResult, pipelineRun: formattedPipelineRun, reconReport });
   } catch (err) {
     console.error('Error executing pipeline:', err);
     res.status(500).json({ error: 'Pipeline execution failed' });
@@ -252,6 +296,92 @@ app.get('/api/quarantine', async (req, res) => {
     })));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch quarantine records' });
+  }
+});
+
+// GET /api/file-arrivals
+app.get('/api/file-arrivals', async (req, res) => {
+  try {
+    const arrivals = await prisma.fileArrival.findMany();
+    res.json(arrivals);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch file arrivals' });
+  }
+});
+
+// GET /api/schema-drifts
+app.get('/api/schema-drifts', async (req, res) => {
+  try {
+    const drifts = await prisma.schemaDrift.findMany();
+    res.json(drifts);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch schema drifts' });
+  }
+});
+
+// PATCH /api/schema-drifts/:id
+app.patch('/api/schema-drifts/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const updated = await prisma.schemaDrift.update({
+      where: { id: req.params.id },
+      data: { status }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update schema drift' });
+  }
+});
+
+// GET /api/failure-fingerprints
+app.get('/api/failure-fingerprints', async (req, res) => {
+  try {
+    const fingerprints = await prisma.failureFingerprint.findMany();
+    res.json(fingerprints.map(fp => ({
+      ...fp,
+      evidenceRows: JSON.parse(fp.evidenceRows || '[]')
+    })));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch failure fingerprints' });
+  }
+});
+
+// GET /api/variances
+app.get('/api/variances', async (req, res) => {
+  try {
+    const variances = await prisma.varianceInvestigation.findMany();
+    res.json(variances);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch variances' });
+  }
+});
+
+// POST /api/variances/:id/waiver
+app.post('/api/variances/:id/waiver', async (req, res) => {
+  try {
+    const { notes, expiryDays } = req.body;
+    const expiryDate = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const updated = await prisma.varianceInvestigation.update({
+      where: { id: req.params.id },
+      data: {
+        status: 'Waived',
+        justificationNotes: notes,
+        waiverExpiryDate: expiryDate
+      }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to submit variance waiver' });
+  }
+});
+
+// GET /api/reconciliations
+app.get('/api/reconciliations', async (req, res) => {
+  try {
+    const recons = await prisma.reconciliationReport.findMany();
+    res.json(recons);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch reconciliation reports' });
   }
 });
 

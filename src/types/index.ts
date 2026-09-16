@@ -154,6 +154,7 @@ export interface PipelineRun {
   reconciliationStatus: 'Match' | 'Variance' | 'Pending';
   logTrace: string[];
   timestamp: string;
+  validOdsRows?: any[];
 }
 
 export interface ReconciliationReport {

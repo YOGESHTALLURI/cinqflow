@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Scratch scripts & temp files
+scratch/
+*.db-journal
+

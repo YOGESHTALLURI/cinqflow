@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import type { MedallionLayer } from '../../types';
+import type { MedallionLayer, PipelineRun } from '../../types';
 import { 
   Workflow, 
   Play, 
@@ -38,6 +38,67 @@ export const PipelineEngine: React.FC = () => {
     }, 1200);
   };
 
+  const getLogs = (): string[] => {
+    if (!latestRun || !latestRun.logTrace) return [];
+    if (Array.isArray(latestRun.logTrace)) return latestRun.logTrace;
+    if (typeof latestRun.logTrace === 'string') {
+      try {
+        const parsed = JSON.parse(latestRun.logTrace);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        return [latestRun.logTrace];
+      }
+    }
+    return [];
+  };
+
+  const getStageStat = (layer: MedallionLayer) => {
+    if (!latestRun || !latestRun.stageStats) return undefined;
+    let statsObj: any = latestRun.stageStats;
+    if (typeof statsObj === 'string') {
+      try {
+        statsObj = JSON.parse(statsObj);
+      } catch {
+        return undefined;
+      }
+    }
+    return statsObj ? statsObj[layer] : undefined;
+  };
+
+  const getOdsRows = (): any[] => {
+    if (latestRun && latestRun.validOdsRows) {
+      let rowsObj = latestRun.validOdsRows;
+      if (typeof rowsObj === 'string') {
+        try {
+          rowsObj = JSON.parse(rowsObj);
+        } catch {
+          rowsObj = [];
+        }
+      }
+      if (Array.isArray(rowsObj) && rowsObj.length > 0) return rowsObj;
+    }
+    return [
+      {
+        surrogateKey: 'ODS-MBR-0010291',
+        linkId: 'LNK-8849-0129',
+        sourceMemberId: 'AET984210',
+        memberName: 'JOHN SMITH',
+        planCode: 'HMO-GOLD-01',
+        effectiveDate: '2026-01-01',
+        status: 'ODS Inserted'
+      },
+      {
+        surrogateKey: 'ODS-MBR-0010292',
+        linkId: 'LNK-8849-0130',
+        sourceMemberId: 'AET984211',
+        memberName: 'ELEANOR VANCE',
+        planCode: 'PPO-SILV-02',
+        effectiveDate: '2026-01-01',
+        status: 'ODS Inserted'
+      }
+    ];
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
@@ -67,7 +128,7 @@ export const PipelineEngine: React.FC = () => {
           <button
             onClick={handleSimulateRun}
             disabled={isProcessing}
-            className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+            className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer"
           >
             <Play className={`w-4 h-4 ${isProcessing ? 'animate-spin' : ''}`} />
             <span>{isProcessing ? 'Processing Pipeline...' : 'Trigger Pipeline Run'}</span>
@@ -79,7 +140,7 @@ export const PipelineEngine: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
         {stages.map((stg) => {
           const Icon = stg.icon;
-          const stat = latestRun?.stageStats[stg.layer];
+          const stat = getStageStat(stg.layer);
           const isSelected = activeStageTab === stg.layer;
 
           return (
@@ -155,24 +216,17 @@ export const PipelineEngine: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80 text-[11px]">
-                <tr className="hover:bg-slate-800/30">
-                  <td className="px-4 py-2.5 text-cyan-300">ODS-MBR-0010291</td>
-                  <td className="px-4 py-2.5 text-indigo-400">LNK-8849-0129</td>
-                  <td className="px-4 py-2.5 text-slate-300">AET984210</td>
-                  <td className="px-4 py-2.5 text-slate-200">JOHN SMITH</td>
-                  <td className="px-4 py-2.5 text-slate-400">HMO-GOLD-01</td>
-                  <td className="px-4 py-2.5 text-slate-400">2026-01-01</td>
-                  <td className="px-4 py-2.5 text-right font-bold text-emerald-400">ODS Inserted</td>
-                </tr>
-                <tr className="hover:bg-slate-800/30">
-                  <td className="px-4 py-2.5 text-cyan-300">ODS-MBR-0010292</td>
-                  <td className="px-4 py-2.5 text-indigo-400">LNK-8849-0130</td>
-                  <td className="px-4 py-2.5 text-slate-300">AET984211</td>
-                  <td className="px-4 py-2.5 text-slate-200">ELEANOR VANCE</td>
-                  <td className="px-4 py-2.5 text-slate-400">PPO-SILV-02</td>
-                  <td className="px-4 py-2.5 text-slate-400">2026-01-01</td>
-                  <td className="px-4 py-2.5 text-right font-bold text-emerald-400">ODS Inserted</td>
-                </tr>
+                {getOdsRows().map((row: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-slate-800/30">
+                    <td className="px-4 py-2.5 text-cyan-300">{row.surrogateKey || row.id || `ODS-${idx+1}`}</td>
+                    <td className="px-4 py-2.5 text-indigo-400">{row.linkId || `LNK-8849-01${idx+1}`}</td>
+                    <td className="px-4 py-2.5 text-slate-300">{row.sourceMemberId || row.memberId || '-'}</td>
+                    <td className="px-4 py-2.5 text-slate-200">{row.memberName || row.name || '-'}</td>
+                    <td className="px-4 py-2.5 text-slate-400">{row.planCode || row.plan || '-'}</td>
+                    <td className="px-4 py-2.5 text-slate-400">{row.effectiveDate || row.effDate || '2026-01-01'}</td>
+                    <td className="px-4 py-2.5 text-right font-bold text-emerald-400">{row.status || 'ODS Inserted'}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -182,11 +236,11 @@ export const PipelineEngine: React.FC = () => {
         <div className="glass-card rounded-xl p-4 border border-slate-800 bg-slate-950 font-mono text-xs text-slate-300 space-y-2">
           <div className="flex items-center gap-2 text-cyan-400 font-bold border-b border-slate-900 pb-2">
             <Terminal className="w-4 h-4" />
-            <span>Execution Execution Trace Log (Batch {latestRun?.batchId})</span>
+            <span>Execution Trace Log (Batch {latestRun?.batchId})</span>
           </div>
 
           <div className="space-y-1 text-[11px] max-h-40 overflow-y-auto pr-2">
-            {latestRun?.logTrace.map((log, idx) => (
+            {getLogs().map((log, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 <ChevronRight className="w-3 h-3 text-cyan-500 shrink-0 mt-0.5" />
                 <span>{log}</span>

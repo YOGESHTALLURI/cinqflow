@@ -9,20 +9,15 @@ import { Step5ReviewSubmit } from './Step5ReviewSubmit';
 import { Sparkles, Check, Building2, Table, Workflow, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 export const OnboardingWizard: React.FC = () => {
-  const { addFeed, setActiveTab } = useApp();
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [formData, setFormData] = useState<Partial<FeedConfig>>({
-    domain: 'Enrollment',
-    deliveryMethod: 'SFTP',
-    fileFormat: 'CSV',
-    frequency: 'Daily 04:00 EST',
-    slaMinutes: 120,
-    owner: 'Sarah Jenkins (Lead BA)'
-  });
-
-  const updateFormData = (updates: Partial<FeedConfig>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
-  };
+  const { 
+    addFeed, 
+    setActiveTab, 
+    onboardingDraft: formData, 
+    updateOnboardingDraft: updateFormData, 
+    onboardingStep: currentStep, 
+    setOnboardingStep: setCurrentStep,
+    resetOnboardingDraft
+  } = useApp();
 
   const steps = [
     { number: 1, title: 'Feed Metadata', icon: Building2 },
@@ -34,6 +29,7 @@ export const OnboardingWizard: React.FC = () => {
 
   const handleFinalSubmit = (finalFeed: FeedConfig) => {
     addFeed(finalFeed);
+    resetOnboardingDraft();
     setActiveTab('registry');
   };
 
@@ -50,9 +46,19 @@ export const OnboardingWizard: React.FC = () => {
             Configure a standard healthcare data feed through guided schema inference, canonical mapping, plain-English DQ rules, and automated pipeline publishing.
           </p>
         </div>
-        <span className="px-3 py-1 bg-cyan-950 text-cyan-400 border border-cyan-800 rounded-full text-xs font-semibold">
-          Wave 1 Self-Service
-        </span>
+        <div className="flex items-center gap-3">
+          {(formData.sourceOrg || formData.feedName) && (
+            <button
+              onClick={resetOnboardingDraft}
+              className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-full text-xs font-semibold transition-colors"
+            >
+              Reset Draft
+            </button>
+          )}
+          <span className="px-3 py-1 bg-cyan-950 text-cyan-400 border border-cyan-800 rounded-full text-xs font-semibold">
+            Wave 1 Self-Service
+          </span>
+        </div>
       </div>
 
       {/* Step Progress Stepper */}

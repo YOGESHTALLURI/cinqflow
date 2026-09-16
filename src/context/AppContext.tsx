@@ -56,8 +56,14 @@ interface AppContextType {
   pauseFeedIngestion: (feedId: string) => void;
   triggerBatchRetry: (batchId: string) => void;
   resolveSchemaDrift: (driftId: string, action: 'Accepted' | 'Rejected') => void;
-  submitVarianceWaiver: (varianceId: string, notes: string, expiryDays: number) => void;
-  reprocessBatchRecovery: (batchId: string, mode: 'restart' | 'reprocess' | 'backdate') => void;
+  // --- Onboarding Draft Persistence (CF-V1-E4-01) ---
+  onboardingDraft: Partial<FeedConfig>;
+  updateOnboardingDraft: (updates: Partial<FeedConfig>) => void;
+  onboardingStep: number;
+  setOnboardingStep: (step: number) => void;
+  resetOnboardingDraft: () => void;
+  uploadedFileName: string | null;
+  setUploadedFileName: (name: string | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -72,14 +78,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reconciliations, setReconciliations] = useState<ReconciliationReport[]>(MOCK_RECONCILIATIONS);
   const [selectedFeedId, setSelectedFeedId] = useState<string | null>('feed-001');
 
-  // Wave 2 State
-  const [fileArrivals] = useState<FileArrival[]>(MOCK_FILE_ARRIVALS);
+  const [fileArrivals, setFileArrivals] = useState<FileArrival[]>(MOCK_FILE_ARRIVALS);
   const [schemaDrifts, setSchemaDrifts] = useState<SchemaDrift[]>(MOCK_SCHEMA_DRIFTS);
   const [failureFingerprints, setFailureFingerprints] = useState<FailureFingerprint[]>(MOCK_FAILURE_FINGERPRINTS);
   const [reliabilityTrends] = useState<FeedReliabilityTrend[]>(MOCK_RELIABILITY_TRENDS);
   const [variances, setVariances] = useState<VarianceInvestigation[]>(MOCK_VARIANCES);
   const [incidentActions, setIncidentActions] = useState<OpsIncidentAction[]>([]);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+
+  // Onboarding Draft Persistence (CF-V1-E4-01)
+  const DEFAULT_ONBOARDING_DRAFT: Partial<FeedConfig> = {
+    domain: 'Enrollment',
+    deliveryMethod: 'SFTP',
+    fileFormat: 'CSV',
+    frequency: 'Daily 04:00 EST',
+    slaMinutes: 120,
+    owner: 'Sarah Jenkins (Lead BA)'
+  };
+
+  const [onboardingDraft, setOnboardingDraftState] = useState<Partial<FeedConfig>>(() => {
+    try {
+      const saved = localStorage.getItem('cinqflow_onboarding_draft');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return DEFAULT_ONBOARDING_DRAFT;
+  });
+
+  const [onboardingStep, setOnboardingStepState] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('cinqflow_onboarding_step');
+      if (saved) return parseInt(saved, 10) || 1;
+    } catch (e) {}
+    return 1;
+  });
+
+  const [uploadedFileName, setUploadedFileNameState] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('cinqflow_uploaded_filename');
+    } catch (e) {}
+    return null;
+  });
+
+  const updateOnboardingDraft = (updates: Partial<FeedConfig>) => {
+    setOnboardingDraftState(prev => {
+      const updated = { ...prev, ...updates };
+      try {
+        localStorage.setItem('cinqflow_onboarding_draft', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const setOnboardingStep = (step: number) => {
+    setOnboardingStepState(step);
+    try {
+      localStorage.setItem('cinqflow_onboarding_step', step.toString());
+    } catch (e) {}
+  };
+
+  const setUploadedFileName = (name: string | null) => {
+    setUploadedFileNameState(name);
+    try {
+      if (name) localStorage.setItem('cinqflow_uploaded_filename', name);
+      else localStorage.removeItem('cinqflow_uploaded_filename');
+    } catch (e) {}
+  };
+
+  const resetOnboardingDraft = () => {
+    setOnboardingDraftState(DEFAULT_ONBOARDING_DRAFT);
+    setOnboardingStepState(1);
+    setUploadedFileNameState(null);
+    try {
+      localStorage.removeItem('cinqflow_onboarding_draft');
+      localStorage.removeItem('cinqflow_onboarding_step');
+      localStorage.removeItem('cinqflow_uploaded_filename');
+    } catch (e) {}
+  };
 
   React.useEffect(() => {
     async function syncBackend() {
@@ -88,17 +162,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (isHealthy) {
           setIsBackendConnected(true);
           const backendFeeds = await apiService.fetchFeeds();
-          if (backendFeeds && backendFeeds.length > 0) {
-            setFeeds(backendFeeds);
-          }
+          if (backendFeeds && backendFeeds.length > 0) setFeeds(backendFeeds);
+          
           const backendRuns = await apiService.fetchPipelineRuns();
-          if (backendRuns && backendRuns.length > 0) {
-            setPipelineRuns(backendRuns);
-          }
+          if (backendRuns && backendRuns.length > 0) setPipelineRuns(backendRuns);
+          
           const backendQuarantine = await apiService.fetchQuarantineRecords();
-          if (backendQuarantine && backendQuarantine.length > 0) {
-            setQuarantineRecords(backendQuarantine);
-          }
+          if (backendQuarantine && backendQuarantine.length > 0) setQuarantineRecords(backendQuarantine);
+
+          const backendArrivals = await apiService.fetchFileArrivals();
+          if (backendArrivals && backendArrivals.length > 0) setFileArrivals(backendArrivals);
+
+          const backendDrifts = await apiService.fetchSchemaDrifts();
+          if (backendDrifts && backendDrifts.length > 0) setSchemaDrifts(backendDrifts);
+
+          const backendFingerprints = await apiService.fetchFailureFingerprints();
+          if (backendFingerprints && backendFingerprints.length > 0) setFailureFingerprints(backendFingerprints as FailureFingerprint[]);
+
+          const backendVariances = await apiService.fetchVariances();
+          if (backendVariances && backendVariances.length > 0) setVariances(backendVariances as VarianceInvestigation[]);
+
+          const backendRecons = await apiService.fetchReconciliations();
+          if (backendRecons && backendRecons.length > 0) setReconciliations(backendRecons);
         }
       } catch (err) {
         setIsBackendConnected(false);
@@ -107,8 +192,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     syncBackend();
   }, []);
 
-  const addFeed = (newFeed: FeedConfig) => {
+  const addFeed = async (newFeed: FeedConfig) => {
     setFeeds(prev => [newFeed, ...prev]);
+    if (isBackendConnected) {
+      try {
+        const savedFeed = await apiService.createFeed(newFeed);
+        setFeeds(prev => prev.map(f => f.id === newFeed.id || f.feedCode === newFeed.feedCode ? savedFeed : f));
+      } catch (err) {
+        console.error('Failed to persist feed to backend API:', err);
+      }
+    }
   };
 
   const updateFeedStatus = (feedId: string, status: FeedConfig['status']) => {
@@ -128,9 +221,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const runPipeline = (feedId: string) => {
+  const runPipeline = async (feedId: string, fileName?: string, rawRows?: any[]) => {
     const feed = feeds.find(f => f.id === feedId);
     if (!feed) return;
+
+    if (isBackendConnected) {
+      try {
+        const res = await apiService.runPipeline(feedId, fileName, rawRows);
+        if (res.pipelineRun) {
+          const run = {
+            ...res.pipelineRun,
+            stageStats: typeof res.pipelineRun.stageStats === 'string' ? JSON.parse(res.pipelineRun.stageStats) : res.pipelineRun.stageStats,
+            logTrace: typeof res.pipelineRun.logTrace === 'string' ? JSON.parse(res.pipelineRun.logTrace) : res.pipelineRun.logTrace
+          };
+          setPipelineRuns(prev => [run, ...prev]);
+        }
+        if (res.reconReport) {
+          setReconciliations(prev => [res.reconReport, ...prev]);
+        }
+        const backendQuarantine = await apiService.fetchQuarantineRecords();
+        if (backendQuarantine) setQuarantineRecords(backendQuarantine);
+        return;
+      } catch (err) {
+        console.error('Backend pipeline run error, falling back to local simulation:', err);
+      }
+    }
 
     const newRunId = `run-${Math.floor(1000 + Math.random() * 9000)}`;
     const batchId = `BATCH-${new Date().toISOString().replace(/[-:T.]/g, '').substring(0, 12)}`;
@@ -141,7 +256,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       feedName: feed.feedName,
       batchId: batchId,
       fileReceived: new Date().toLocaleString(),
-      fileName: `${feed.feedCode.toLowerCase()}_sample.csv`,
+      fileName: fileName || `${feed.feedCode.toLowerCase()}_sample.csv`,
       fileSizeBytes: 2450100,
       status: 'Success',
       currentStage: 'Silver ODS',
@@ -238,11 +353,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIncidentActions(prev => [newAct, ...prev]);
   };
 
-  const resolveSchemaDrift = (driftId: string, action: 'Accepted' | 'Rejected') => {
+  const resolveSchemaDrift = async (driftId: string, action: 'Accepted' | 'Rejected') => {
     setSchemaDrifts(prev => prev.map(sd => sd.id === driftId ? { ...sd, status: action } : sd));
+    if (isBackendConnected) {
+      try {
+        await apiService.updateSchemaDrift(driftId, action);
+      } catch (err) {
+        console.error('Failed to update schema drift on backend:', err);
+      }
+    }
   };
 
-  const submitVarianceWaiver = (varianceId: string, notes: string, expiryDays: number) => {
+  const submitVarianceWaiver = async (varianceId: string, notes: string, expiryDays: number) => {
     const expiryDate = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     setVariances(prev => prev.map(v => {
       if (v.id === varianceId) {
@@ -263,6 +385,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       waiverReason: notes,
       waiverExpiryDate: expiryDate
     })));
+
+    if (isBackendConnected) {
+      try {
+        await apiService.submitVarianceWaiver(varianceId, notes, expiryDays);
+      } catch (err) {
+        console.error('Failed to submit variance waiver to backend:', err);
+      }
+    }
   };
 
   const reprocessBatchRecovery = (batchId: string, mode: 'restart' | 'reprocess' | 'backdate') => {
@@ -330,9 +460,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       assignIncidentOwner,
       pauseFeedIngestion,
       triggerBatchRetry,
-      resolveSchemaDrift,
-      submitVarianceWaiver,
-      reprocessBatchRecovery
+      reprocessBatchRecovery,
+
+      onboardingDraft,
+      updateOnboardingDraft,
+      onboardingStep,
+      setOnboardingStep,
+      resetOnboardingDraft,
+      uploadedFileName,
+      setUploadedFileName
     }}>
       {children}
     </AppContext.Provider>

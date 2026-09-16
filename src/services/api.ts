@@ -1,4 +1,4 @@
-import type { FeedConfig, PipelineRun, QuarantineRecord } from '../types';
+import type { FeedConfig, PipelineRun, QuarantineRecord, FileArrival, SchemaDrift, FailureFingerprint, VarianceInvestigation, ReconciliationReport } from '../types';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -58,5 +58,56 @@ export const apiService = {
     const res = await fetch(`${API_BASE_URL}/quarantine`);
     if (!res.ok) throw new Error('Failed to fetch quarantine records');
     return res.json();
+  },
+
+  async fetchFileArrivals(): Promise<FileArrival[]> {
+    const res = await fetch(`${API_BASE_URL}/file-arrivals`);
+    if (!res.ok) throw new Error('Failed to fetch file arrivals');
+    return res.json();
+  },
+
+  async fetchSchemaDrifts(): Promise<SchemaDrift[]> {
+    const res = await fetch(`${API_BASE_URL}/schema-drifts`);
+    if (!res.ok) throw new Error('Failed to fetch schema drifts');
+    return res.json();
+  },
+
+  async updateSchemaDrift(id: string, status: 'Accepted' | 'Rejected'): Promise<SchemaDrift> {
+    const res = await fetch(`${API_BASE_URL}/schema-drifts/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error('Failed to update schema drift');
+    return res.json();
+  },
+
+  async fetchFailureFingerprints(): Promise<FailureFingerprint[]> {
+    const res = await fetch(`${API_BASE_URL}/failure-fingerprints`);
+    if (!res.ok) throw new Error('Failed to fetch failure fingerprints');
+    return res.json();
+  },
+
+  async fetchVariances(): Promise<VarianceInvestigation[]> {
+    const res = await fetch(`${API_BASE_URL}/variances`);
+    if (!res.ok) throw new Error('Failed to fetch variances');
+    return res.json();
+  },
+
+  async submitVarianceWaiver(id: string, notes: string, expiryDays: number): Promise<VarianceInvestigation> {
+    const res = await fetch(`${API_BASE_URL}/variances/${id}/waiver`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes, expiryDays })
+    });
+    if (!res.ok) throw new Error('Failed to submit variance waiver');
+    return res.json();
+  },
+
+  async fetchReconciliations(): Promise<ReconciliationReport[]> {
+    const res = await fetch(`${API_BASE_URL}/reconciliations`);
+    if (!res.ok) throw new Error('Failed to fetch reconciliations');
+    return res.json();
   }
 };
+

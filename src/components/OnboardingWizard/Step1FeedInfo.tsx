@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { FeedConfig, HealthcareDomain, DeliveryMethod, FileFormat, SchemaField } from '../../types';
 import { Building2, Upload, FileCode, CheckCircle2, Sparkles, AlertCircle } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 interface Props {
   formData: Partial<FeedConfig>;
@@ -9,9 +10,9 @@ interface Props {
 }
 
 export const Step1FeedInfo: React.FC<Props> = ({ formData, updateFormData, onNext }) => {
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const { uploadedFileName, setUploadedFileName } = useApp();
   const [isParsing, setIsParsing] = useState(false);
-  const [parseSuccess, setParseSuccess] = useState<boolean>(!!formData.sourceOrg);
+  const parseSuccess = !!(formData.sourceOrg && formData.feedCode);
 
   const domains: HealthcareDomain[] = ['Enrollment', 'Claims', 'ADT', 'Provider', 'Clinical', 'Quality', 'Risk', 'Lab'];
   const deliveryMethods: DeliveryMethod[] = ['SFTP', 'API', 'FHIR', 'Database', 'Azure Storage', 'File Upload'];
@@ -19,7 +20,6 @@ export const Step1FeedInfo: React.FC<Props> = ({ formData, updateFormData, onNex
 
   const parseFileAndSetForm = (fileName: string, content: string) => {
     setUploadedFileName(fileName);
-    setParseSuccess(true);
 
     let inferredFields: SchemaField[] = [];
 
