@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useApp } from '../../context/AppContext';
 import type { FeedConfig } from '../../types';
 import { Step1FeedInfo } from './Step1FeedInfo';

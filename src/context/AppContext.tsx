@@ -55,7 +55,9 @@ interface AppContextType {
   assignIncidentOwner: (incidentId: string, owner: string) => void;
   pauseFeedIngestion: (feedId: string) => void;
   triggerBatchRetry: (batchId: string) => void;
+  reprocessBatchRecovery: (batchId: string, mode?: any) => void;
   resolveSchemaDrift: (driftId: string, action: 'Accepted' | 'Rejected') => void;
+  submitVarianceWaiver: (varianceId: string, notes: string, expiryDays: number) => void;
   // --- Onboarding Draft Persistence (CF-V1-E4-01) ---
   onboardingDraft: Partial<FeedConfig>;
   updateOnboardingDraft: (updates: Partial<FeedConfig>) => void;
@@ -461,6 +463,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       pauseFeedIngestion,
       triggerBatchRetry,
       reprocessBatchRecovery,
+      resolveSchemaDrift,
+      submitVarianceWaiver,
 
       onboardingDraft,
       updateOnboardingDraft,

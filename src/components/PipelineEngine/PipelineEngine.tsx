@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import type { MedallionLayer, PipelineRun } from '../../types';
+import type { MedallionLayer } from '../../types';
 import { 
   Workflow, 
   Play, 
