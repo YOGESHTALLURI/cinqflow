@@ -26,4 +26,6 @@ dist-ssr
 # Scratch scripts & temp files
 scratch/
 *.db-journal
+word/
+
 

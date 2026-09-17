@@ -385,6 +385,86 @@ app.get('/api/reconciliations', async (req, res) => {
   }
 });
 
+// --- Wave 3 REST Endpoints ---
+
+// GET /api/wave3/verato/status
+app.get('/api/wave3/verato/status', (req, res) => {
+  res.json({
+    veratoApiStatus: 'HEALTHY_CONNECTED',
+    averageLatencyMs: 42,
+    todaySubmitted: 10000,
+    todayResolved: 9940,
+    todayUnresolved: 18,
+    todayFailedRetry: 42
+  });
+});
+
+// GET /api/wave3/identity/exceptions
+app.get('/api/wave3/identity/exceptions', (req, res) => {
+  res.json([
+    {
+      id: 'ID-EXC-101',
+      personName: 'Elizabeth Vance / E. Vance',
+      dob: '1979-11-03',
+      ssnMasked: '***-**-6789',
+      occurrencesCount: 3,
+      affectedBatches: ['BATCH-20260917-001', 'BATCH-20260916-004'],
+      primaryReason: 'Multiple candidate linkIds (LINK-9012 vs LINK-9088) with conflicting middle initial',
+      assignedSteward: 'Sarah Jenkins (Data Steward)',
+      agingDays: 2,
+      slaStatus: 'ON_TRACK',
+      status: 'OPEN'
+    }
+  ]);
+});
+
+// POST /api/wave3/identity/merge-split
+app.post('/api/wave3/identity/merge-split', (req, res) => {
+  const { cardId, decision, stewardName } = req.body;
+  res.json({
+    cardId,
+    decision,
+    stewardName: stewardName || 'Sarah Jenkins (Data Steward)',
+    executedAt: new Date().toISOString(),
+    verificationMatchPercent: 100,
+    status: 'DECISION_EXECUTED_AND_VERIFIED'
+  });
+});
+
+// GET /api/wave3/identity/telemetry
+app.get('/api/wave3/identity/telemetry', (req, res) => {
+  res.json({
+    date: new Date().toISOString().split('T')[0],
+    submittedCount: 10000,
+    resolvedCount: 9940,
+    unresolvedCount: 18,
+    failedRetryCount: 42,
+    fidelisBothKeysCoveragePct: 99.8,
+    optumBothKeysCoveragePct: 99.1,
+    molinaBothKeysCoveragePct: 97.4,
+    cutoverReadinessScore: 98.6
+  });
+});
+
+// GET /api/wave3/canonical-models
+app.get('/api/wave3/canonical-models', (req, res) => {
+  res.json([
+    {
+      version: 'v3.1.0',
+      domain: 'Member Enrollment',
+      tableName: 'ods_member_enrollment',
+      surrogateKeyName: 'member_sk (BIGINT)',
+      sourceKeyName: 'source_member_id (VARCHAR)',
+      status: 'ACTIVE_VERSION',
+      createdAt: '2026-09-01',
+      columnsCount: 34,
+      downstreamConsumerCount: 12,
+      changesSummary: 'Added normalized payment attributes (billed_amt, allowed_amt) and effective-dated SCD Type 2 tracking',
+      certificationStatus: 'CERTIFIED'
+    }
+  ]);
+});
+
 app.listen(PORT, async () => {
   console.log(`CINQFlow Backend REST API Server running on port ${PORT}`);
   await seedDatabase();

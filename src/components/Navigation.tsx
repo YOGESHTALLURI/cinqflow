@@ -16,13 +16,21 @@ import {
   Clock,
   GitCommit,
   RotateCcw,
-  Award
+  Award,
+  Layers
 } from 'lucide-react';
 
 export const Navigation: React.FC = () => {
   const { userRole, setUserRole, phiMasked, setPhiMasked, activeTab, setActiveTab } = useApp();
 
   const navItems = [
+    { id: 'verato-identity', label: 'Verato Identity Stage', icon: UserCheck, badge: 'Wave 3' },
+    { id: 'identity-exceptions', label: 'Identity Exception Queue', icon: ShieldAlert, badge: 'Wave 3' },
+    { id: 'merge-split-cards', label: 'AI Merge & Split Evidence', icon: Sparkles, badge: 'Wave 3' },
+    { id: 'identity-telemetry', label: 'Identity Cutover Telemetry', icon: Activity, badge: 'Wave 3' },
+    { id: 'canonical-model', label: 'Canonical ODS Model', icon: Database, badge: 'Wave 3' },
+    { id: 'complex-formats', label: 'Complex Formats (FHIR)', icon: Layers, badge: 'Wave 3' },
+    { id: 'financial-packs', label: 'Financial Reconciliation Packs', icon: Scale, badge: 'Wave 3' },
     { id: 'ops-control', label: 'Ops Control & Recovery', icon: RotateCcw, badge: 'Wave 2' },
     { id: 'file-arrivals', label: 'File Arrival Board', icon: Clock, badge: 'Wave 2' },
     { id: 'schema-drift', label: 'Schema Drift Guard', icon: GitCommit, badge: 'Wave 2' },
@@ -57,8 +65,8 @@ export const Navigation: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-white tracking-wide">CINQ<span className="gradient-text">Flow</span></h1>
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/60 font-mono">
-                Wave 2 (Ops & Governance)
+              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800/60 font-mono">
+                Wave 3 (Identity & Canonical Suite)
               </span>
             </div>
             <p className="text-xs text-slate-400">CINQCARE Self-Service Healthcare Data Platform</p>

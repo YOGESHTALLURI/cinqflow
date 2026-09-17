@@ -68,8 +68,21 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({ children }) => {
         { id: 'reconciliation', label: 'Reconciliation & Audit', icon: Scale, wave: 'Wave 1' },
         { id: 'catalog', label: 'Data Catalog & Glossary', icon: BookOpen, wave: 'Wave 0' },
       ]
+    },
+    {
+      groupTitle: 'Wave 3: Identity & Canonical',
+      items: [
+        { id: 'verato-identity', label: 'Verato Identity Stage', icon: UserCheck, badge: 'Wave 3', highlight: true },
+        { id: 'identity-exceptions', label: 'Identity Exception Queue', icon: ShieldAlert, badge: 'Wave 3', highlight: true },
+        { id: 'merge-split-cards', label: 'AI Merge & Split Evidence', icon: Sparkles, badge: 'Wave 3', highlight: true },
+        { id: 'identity-telemetry', label: 'Identity Cutover Telemetry', icon: Activity, badge: 'Wave 3', highlight: true },
+        { id: 'canonical-model', label: 'Canonical ODS Model & Contracts', icon: Database, badge: 'Wave 3', highlight: true },
+        { id: 'complex-formats', label: 'Complex Formats (FHIR/HL7)', icon: Layers, badge: 'Wave 3', highlight: true },
+        { id: 'financial-packs', label: 'Financial Reconciliation Packs', icon: Scale, badge: 'Wave 3', highlight: true },
+      ]
     }
   ];
+
 
   const roles: { value: UserRole; label: string }[] = [
     { value: 'ba', label: 'Business Analyst (BA)' },

@@ -15,6 +15,15 @@ import { SchemaDriftInspector } from './components/Operations/SchemaDriftInspect
 import { VarianceWaiverWorkstation } from './components/Operations/VarianceWaiverWorkstation';
 import { SidebarNavigation } from './components/SidebarNavigation';
 
+// Wave 3 Components
+import { VeratoIdentityCenter } from './components/Wave3/VeratoIdentityCenter';
+import { IdentityExceptionQueue } from './components/Wave3/IdentityExceptionQueue';
+import { MergeSplitEvidenceStudio } from './components/Wave3/MergeSplitEvidenceStudio';
+import { IdentityCutoverTelemetry } from './components/Wave3/IdentityCutoverTelemetry';
+import { CanonicalModelStudio } from './components/Wave3/CanonicalModelStudio';
+import { ComplexFormatStudio } from './components/Wave3/ComplexFormatStudio';
+import { FinancialMemberReconciliationPacks } from './components/Wave3/FinancialMemberReconciliationPacks';
+
 const ActiveView: React.FC = () => {
   const { activeTab } = useApp();
 
@@ -38,6 +47,15 @@ const ActiveView: React.FC = () => {
       {activeTab === 'observability' && <ObservabilityDashboard />}
       {activeTab === 'reconciliation' && <ReconciliationReport />}
       {activeTab === 'catalog' && <DataCatalog />}
+
+      {/* Group 5: Identity & Canonical Suite (Wave 3) */}
+      {activeTab === 'verato-identity' && <VeratoIdentityCenter />}
+      {activeTab === 'identity-exceptions' && <IdentityExceptionQueue />}
+      {activeTab === 'merge-split-cards' && <MergeSplitEvidenceStudio />}
+      {activeTab === 'identity-telemetry' && <IdentityCutoverTelemetry />}
+      {activeTab === 'canonical-model' && <CanonicalModelStudio />}
+      {activeTab === 'complex-formats' && <ComplexFormatStudio />}
+      {activeTab === 'financial-packs' && <FinancialMemberReconciliationPacks />}
     </>
   );
 };

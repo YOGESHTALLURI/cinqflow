@@ -262,3 +262,5 @@ export interface OpsIncidentAction {
   timestamp: string;
   notes?: string;
 }
+
+export * from './wave3';
